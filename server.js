@@ -10,6 +10,12 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.static(__dirname));
 
+// 首頁一定要明確指定
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "baby_6.html"));
+});
+
+
 app.listen(PORT, () => {
   console.log("Server running on", PORT);
 });
