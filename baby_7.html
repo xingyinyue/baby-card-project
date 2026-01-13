@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>爸媽小卡</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #fff6f8;
+  --card-bg: #ffffff;
+  --accent: #f2b8c6;
+  --border: #f3d6dd;
+  --text: #4a3f42;
+  --shadow: 0 12px 24px rgba(0,0,0,0.08);
+}
+
+body {
+  margin: 0;
+  font-family:
+    "Noto Serif TC",
+    "DFKai-SB",
+    "標楷體",
+    serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  text-align: center;
+  padding: 14px;
+  font-weight: 500;
+}
+
+/* ===== Main ===== */
+main {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ===== 抽卡區 ===== */
+#swipeView {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.card {
+  width: 62vw;
+  max-width: 280px;
+  aspect-ratio: 2.5 / 3.5;
+  background: var(--card-bg);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  padding: 22px;
+  font-size: 17px;
+  line-height: 1.7;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  touch-action: pan-y;
+  border: 1px solid var(--border);
+  letter-spacing: 0.03em;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* ===== 卡片池 ===== */
+#savedView {
+  width: 100%;
+  max-width: 420px;
+  padding: 12px;
+}
+
+/* 分類標籤 */
+.category-bar {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin-bottom: 12px;
+}
+
+.category {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid var(--border);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* 卡片網格 */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 12px;
+}
+
+/* 縮小卡片 */
+.small-card {
+  aspect-ratio: 2.5 / 3.5;
+  background: #fff;
+  border-radius: 14px;
+  padding: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  cursor: grab;
+}
+
+/* ===== Bottom Bar ===== */
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: rgba(255,255,255,0.95);
+  border-top: 1px solid var(--border);
+}
+
+.bottom-bar button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  opacity: 0.4;
+}
+
+.bottom-bar button.active {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.hidden { display: none; }
+</style>
+</head>
+
+<body>
+
+<header id="title">抽卡</header>
+
+<main>
+  <!-- 抽卡區 -->
+  <div id="swipeView">
+    <div class="card" id="card"></div>
+  </div>
+
+  <!-- 卡片池 -->
+  <div id="savedView" class="hidden">
+    <div class="category-bar">
+      <div class="category" data-cat="all">全部</div>
+      <div class="category" data-cat="sleep">睡眠</div>
+      <div class="category" data-cat="feed">餵食</div>
+      <div class="category" data-cat="safe">安全感</div>
+    </div>
+
+    <div class="card-grid" id="cardGrid"></div>
+  </div>
+</main>
+
+<div class="bottom-bar">
+  <button id="btnSwipe" class="active">🃏</button>
+  <button id="btnSaved">⭐</button>
+</div>
+
+<script>
+/* ===== 卡牌資料 ===== */
+const sentences = [
+  "原來寶寶在媽媽肚子裡會打嗝",
+  "懷孕之後才知道，洗牙健保從半年一次變成三個月一次",
+  "台北市政府有補助一胎＄8000的計程車津貼",
+  "懷孕之後才知道，34歲以上就是高齡產婦，做羊膜穿刺政府會有補助",
+  "原來懷孕以後，真的會非常怕熱，連悶一點都會受不了",
+  "懷孕以後才知道，原來可麗露裡面有萊姆酒，不能吃，提拉米蘇也是",
+  "懷孕以後才知道，很多品牌彌月蛋糕試吃要32周以上才能申請，所以不用太早決定"
+];
+
+/* ===== 洗牌後依序抽 ===== */
+let deck = [];
+let deckIndex = 0;
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/* ===== 狀態 ===== */
+let currentText = "";
+let savedCards = [];
+let isAnimating = false;
+
+/* ===== DOM ===== */
+const card = document.getElementById("card");
+const savedView = document.getElementById("savedView");
+const swipeView = document.getElementById("swipeView");
+const cardGrid = document.getElementById("cardGrid");
+const title = document.getElementById("title");
+
+/* ===== 抽卡 ===== */
+function drawCard() {
+  if (deck.length === 0 || deckIndex >= deck.length) {
+    deck = shuffle([...sentences]);
+    deckIndex = 0;
+  }
+  currentText = deck[deckIndex++];
+  card.textContent = currentText;
+  card.style.transform = "translateX(0) rotate(0deg)";
+  card.style.opacity = 1;
+}
+drawCard();
+
+/* ===== 滑動 ===== */
+let startX = 0, currentX = 0, dragging = false;
+
+card.addEventListener("pointerdown", e => {
+  if (isAnimating) return;
+  startX = e.clientX;
+  dragging = true;
+  card.setPointerCapture(e.pointerId);
+});
+
+card.addEventListener("pointermove", e => {
+  if (!dragging || isAnimating) return;
+  currentX = e.clientX - startX;
+  card.style.transform = `translateX(${currentX}px) rotate(${currentX/12}deg)`;
+});
+
+card.addEventListener("pointerup", () => {
+  if (isAnimating) return;
+  dragging = false;
+
+  if (currentX > 120) {
+    savedCards.push({ text: currentText, cat: "all" });
+    flyOut(1);
+  } else if (currentX < -120) {
+    flyOut(-1);
+  } else {
+    card.style.transform = "translateX(0) rotate(0deg)";
+  }
+  currentX = 0;
+});
+
+function flyOut(dir) {
+  isAnimating = true;
+  card.style.transform = `translateX(${dir*500}px) rotate(${dir*25}deg)`;
+  card.style.opacity = 0;
+
+  setTimeout(() => {
+    card.style.transition = "none";
+    drawCard();
+    card.offsetHeight;
+    card.style.transition = "transform 0.3s ease, opacity 0.3s ease";
+    isAnimating = false;
+  }, 300);
+}
+
+/* ===== 卡片池 ===== */
+function renderSaved(filter="all") {
+  cardGrid.innerHTML = "";
+  savedCards
+    .filter(c => filter === "all" || c.cat === filter)
+    .forEach((c, i) => {
+      const div = document.createElement("div");
+      div.className = "small-card";
+      div.textContent = c.text;
+      div.draggable = true;
+      div.ondragstart = e => e.dataTransfer.setData("index", i);
+      cardGrid.appendChild(div);
+    });
+}
+
+/* ===== 分類拖拉 ===== */
+document.querySelectorAll(".category").forEach(cat => {
+  cat.onclick = () => renderSaved(cat.dataset.cat);
+  cat.ondragover = e => e.preventDefault();
+  cat.ondrop = e => {
+    const i = e.dataTransfer.getData("index");
+    savedCards[i].cat = cat.dataset.cat;
+    renderSaved(cat.dataset.cat);
+  };
+});
+
+/* ===== 切換 ===== */
+btnSwipe.onclick = () => {
+  swipeView.classList.remove("hidden");
+  savedView.classList.add("hidden");
+  title.innerText = "抽卡";
+};
+
+btnSaved.onclick = () => {
+  swipeView.classList.add("hidden");
+  savedView.classList.remove("hidden");
+  title.innerText = "卡牌池";
+  renderSaved();
+};
+</script>
+
+</body>
+</html>
