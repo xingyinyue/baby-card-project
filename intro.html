@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>baby card</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fafafa;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang TC",
+        "Microsoft JhengHei", sans-serif;
+      color: #333;
+      cursor: pointer;
+    }
+
+    .message {
+      text-align: center;
+      line-height: 1.8;
+      font-size: 18px;
+      padding: 24px;
+    }
+
+    .hint {
+      margin-top: 16px;
+      font-size: 14px;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+  <div class="message">
+    <div>
+      這是一個給媽媽的抽卡小程式以透過抽卡來了解當媽媽的一切<br />
+      現在平台還沒有記憶功能，可以先截圖儲存卡片喔^^
+    </div>
+    <div class="hint">
+      （用滑鼠點擊任何一處進入）
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("click", () => {
+      window.location.href = "baby_7.html";
+    });
+  </script>
+</body>
+</html>
